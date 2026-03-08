@@ -8,6 +8,9 @@
 .idea/usage.statistics.xml
 .idea/shelf
 
+# runtime
+.vscode/
+
 # deps
 node_modules/
 /src/generated/prisma
