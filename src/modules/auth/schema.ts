@@ -43,7 +43,7 @@ export const AuthResponseSchema = z
 
 export const RefreshSchema = z
   .object({
-    refreshToken: z.string().min(1).openapi({ example: "your-refresh-token" }),
+    refreshToken: z.string().openapi({ example: "your-refresh-token" }),
   })
   .openapi("Refresh");
 

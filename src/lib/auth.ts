@@ -4,10 +4,17 @@ import type { Context, Next } from "hono";
 import { prisma } from "./prisma";
 import { randomUUID } from "crypto";
 
+// ─── Secrets ───
 function getJwtSecret(): string {
   return process.env.JWT_SECRET || "default-secret-change-me";
 }
 
+// ─── Expiry ───
+export const ACCESS_TOKEN_EXPIRY_SECONDS = 60 * 15; // 15 minutes
+export const REFRESH_TOKEN_EXPIRY_DAYS = 7;
+const REFRESH_TOKEN_EXPIRY_SECONDS = REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60;
+
+// ─── Access Token ───
 export async function signToken(payload: {
   userId: string;
   email: string;
@@ -15,30 +22,70 @@ export async function signToken(payload: {
   return await sign(
     {
       ...payload,
-      exp: Math.floor(Date.now() / 1000) + 60 * 15, // 15 minutes
+      type: "access",
+      exp: Math.floor(Date.now() / 1000) + ACCESS_TOKEN_EXPIRY_SECONDS,
     },
     getJwtSecret(),
     "HS256",
   );
 }
 
-export function generateRefreshToken(): string {
-  return randomUUID();
-}
-
-export const REFRESH_TOKEN_EXPIRY_DAYS = 7;
-
 export async function verifyToken(
   token: string,
 ): Promise<{ userId: string; email: string } | null> {
   try {
     const payload = await verify(token, getJwtSecret(), "HS256");
+    if ((payload as any).type !== "access") return null;
     return payload as { userId: string; email: string };
   } catch {
     return null;
   }
 }
 
+export async function generateRefreshToken(payload: {
+  userId: string;
+  email: string;
+  jti: string;
+}): Promise<string> {
+  return await sign(
+    {
+      ...payload,
+      type: "refresh",
+      exp: Math.floor(Date.now() / 1000) + REFRESH_TOKEN_EXPIRY_SECONDS,
+    },
+    getJwtSecret(),
+    "HS256",
+  );
+}
+
+export async function verifyRefreshToken(
+  token: string,
+): Promise<{ userId: string; email: string; jti: string } | null> {
+  try {
+    const payload = await verify(token, getJwtSecret(), "HS256");
+    if ((payload as any).type !== "refresh") return null;
+    return payload as { userId: string; email: string; jti: string };
+  } catch {
+    return null;
+  }
+}
+
+export async function createTokenPair(user: {
+  id: string;
+  email: string;
+}): Promise<{ accessToken: string; refreshToken: string; jti: string }> {
+  const accessToken = await signToken({ userId: user.id, email: user.email });
+  const jti = randomUUID();
+  const refreshToken = await generateRefreshToken({
+    userId: user.id,
+    email: user.email,
+    jti,
+  });
+
+  return { accessToken, refreshToken, jti };
+}
+
+// ─── Auth Middleware ───
 export const authMiddleware = createMiddleware(
   async (c: Context, next: Next) => {
     const authHeader = c.req.header("Authorization");
@@ -54,7 +101,6 @@ export const authMiddleware = createMiddleware(
       return c.json({ error: "Invalid or expired token." }, 401);
     }
 
-    // Check if token exists in active sessions (not logged out)
     const activeToken = await prisma.userToken.findUnique({
       where: { accessToken: token },
     });

@@ -1,5 +1,6 @@
 import { z } from "@hono/zod-openapi";
 import { ProductSchema } from "../product/schema";
+import { CartModelSchema } from "../../generated/zod/schemas";
 
 export const CartItemSchema = z
   .object({

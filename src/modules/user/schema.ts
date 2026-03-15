@@ -1,14 +1,11 @@
 import { z } from "@hono/zod-openapi";
+import { UserModelSchema } from "../../generated/zod/schemas";
 
-export const UserSchema = z
-  .object({
-    id: z.string(),
-    username: z.string(),
-    email: z.string(),
-    createdAt: z.string(),
-    updatedAt: z.string(),
-  })
-  .openapi("User");
+export const UserSchema = UserModelSchema.omit({
+  password: true,
+  cart: true,
+  tokens: true,
+}).openapi("User");
 
 export const UsersSchema = z.array(UserSchema);
 

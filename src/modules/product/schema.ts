@@ -35,9 +35,7 @@ export const SeedProductsSchema = z
   .array(SeedProductSchema)
   .openapi("SeedProduct");
 
-export const ProductSchema = ProductModelSchema.omit({
-  cartItems: true,
-}).openapi("Product");
+export const ProductSchema = ProductBaseSchema.openapi("Product");
 
 export const ProductsSchema = z.array(ProductSchema);
 
@@ -49,39 +47,21 @@ export const GetProductByIdParamSchema = z.object({
   id: z.string().min(1).openapi({ example: "01JMXYZ..." }),
 });
 
-export const CreateProductSchema = ProductBaseSchema.openapi(
-  "CreateProduct",
-).omit({
+export const CreateProductSchema = ProductBaseSchema.omit({
   id: true,
   slug: true,
   createdAt: true,
   updatedAt: true,
-});
+}).openapi("CreateProduct");
 
-export const UpdateProductSchema = ProductBaseSchema.omit({
-  sku: true,
-  name: true,
-  type: true,
-  price: true,
-  weight: true,
-  stockQuantity: true,
-})
-  .extend({
-    sku: z.string().min(1).max(100).optional(),
-    name: z.string().min(1).max(100).optional(),
-    type: CoffeeTypeEnum.optional(),
-    price: z.number().int().positive().optional(),
-    weight: z.number().int().positive().optional(),
-    stockQuantity: z.number().int().min(0).optional(),
-    imageUrl: z.string().nullable().optional().openapi({
-      example:
-        "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=600",
-    }),
-    description: z.string().nullable().optional().openapi({
-      example: "A bold and complex blend of Arabica and Robusta beans...",
-    }),
-  })
-  .openapi("UpdateProduct");
+export const UpdateProductSchema = CreateProductSchema.extend({
+  sku: z.string().min(1).max(100).optional(),
+  name: z.string().min(1).max(100).optional(),
+  type: CoffeeTypeEnum.optional(),
+  price: z.number().int().positive().optional(),
+  weight: z.number().int().positive().optional(),
+  stockQuantity: z.number().int().min(0).optional(),
+}).openapi("UpdateProduct");
 
 export const ProductQuerySchema = z.object({
   page: z.string().optional().openapi({ example: "1" }),

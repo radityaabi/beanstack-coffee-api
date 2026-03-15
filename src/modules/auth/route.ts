@@ -2,8 +2,8 @@ import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import { prisma } from "../../lib/prisma";
 import { hashSync, compareSync } from "bcryptjs";
 import {
-  signToken,
-  generateRefreshToken,
+  createTokenPair,
+  verifyRefreshToken,
   REFRESH_TOKEN_EXPIRY_DAYS,
   authMiddleware,
 } from "../../lib/auth";
@@ -34,6 +34,11 @@ export const authRoute = new OpenAPIHono({
 });
 
 const tags = ["Auth"];
+
+// ─── Helper ───
+function refreshTokenExpiresAt(): Date {
+  return new Date(Date.now() + REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
+}
 
 // ─── POST /auth/register ───
 const registerRoute = createRoute({
@@ -72,24 +77,23 @@ authRoute.openapi(registerRoute, async (c) => {
     data: { username, email, password: hashedPassword },
   });
 
-  const token = await signToken({ userId: user.id, email: user.email });
-  const refreshToken = generateRefreshToken();
+  const { accessToken, refreshToken, jti } = await createTokenPair(user);
+
+  await prisma.userToken.deleteMany({ where: { userId: user.id } });
 
   await prisma.userToken.create({
     data: {
       userId: user.id,
-      accessToken: token,
-      refreshToken,
-      expiresAt: new Date(
-        Date.now() + REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
-      ),
+      accessToken,
+      refreshToken: jti,
+      expiresAt: refreshTokenExpiresAt(),
     },
   });
 
   return c.json(
     {
       message: "User registered successfully",
-      token,
+      token: accessToken,
       refreshToken,
       user: { id: user.id, username: user.username, email: user.email },
     },
@@ -130,24 +134,23 @@ authRoute.openapi(loginRoute, async (c) => {
     return c.json({ error: "Invalid email or password" }, 401);
   }
 
-  const token = await signToken({ userId: user.id, email: user.email });
-  const refreshToken = generateRefreshToken();
+  const { accessToken, refreshToken, jti } = await createTokenPair(user);
+
+  await prisma.userToken.deleteMany({ where: { userId: user.id } });
 
   await prisma.userToken.create({
     data: {
       userId: user.id,
-      accessToken: token,
-      refreshToken,
-      expiresAt: new Date(
-        Date.now() + REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
-      ),
+      accessToken,
+      refreshToken: jti,
+      expiresAt: refreshTokenExpiresAt(),
     },
   });
 
   return c.json(
     {
       message: "Login successful",
-      token,
+      token: accessToken,
       refreshToken,
       user: { id: user.id, username: user.username, email: user.email },
     },
@@ -191,12 +194,7 @@ authRoute.openapi(meRoute, async (c) => {
     return c.json({ error: "User not found" }, 404);
   }
 
-  return c.json(
-    {
-      ...user,
-    },
-    200,
-  );
+  return c.json({ ...user }, 200);
 });
 
 // ─── POST /auth/logout ── Protected ───
@@ -233,7 +231,7 @@ const refreshRoute = createRoute({
   path: "/refresh",
   tags,
   summary: "Refresh access token",
-  description: "Exchange a valid refresh token for a new access token.",
+  description: "Exchange a valid refresh token (JWT) for a new token pair.",
   request: {
     body: {
       content: { "application/json": { schema: RefreshSchema } },
@@ -251,37 +249,49 @@ const refreshRoute = createRoute({
 authRoute.openapi(refreshRoute, async (c) => {
   const { refreshToken } = c.req.valid("json");
 
-  const userToken = await prisma.userToken.findUnique({
-    where: { refreshToken },
+  const payload = await verifyRefreshToken(refreshToken);
+  if (!payload) {
+    return c.json({ error: "Invalid or expired refresh token." }, 401);
+  }
+
+  const userToken = await prisma.userToken.findFirst({
+    where: {
+      userId: payload.userId,
+      refreshToken: payload.jti,
+    },
     include: { user: true },
   });
 
   if (!userToken) {
-    return c.json({ error: "Invalid refresh token." }, 401);
-  }
-
-  if (userToken.expiresAt < new Date()) {
-    await prisma.userToken.delete({ where: { id: userToken.id } });
+    await prisma.userToken.deleteMany({ where: { userId: payload.userId } });
     return c.json(
-      { error: "Refresh token has expired. Please login again." },
+      {
+        error: "Refresh token reuse detected. All sessions have been revoked.",
+      },
       401,
     );
   }
 
-  const newAccessToken = await signToken({
-    userId: userToken.user.id,
-    email: userToken.user.email,
-  });
+  const {
+    accessToken,
+    refreshToken: newRefreshToken,
+    jti: newJti,
+  } = await createTokenPair(userToken.user);
 
   await prisma.userToken.update({
     where: { id: userToken.id },
-    data: { accessToken: newAccessToken },
+    data: {
+      accessToken,
+      refreshToken: newJti,
+      expiresAt: refreshTokenExpiresAt(),
+    },
   });
 
   return c.json(
     {
       message: "Token refreshed successfully",
-      token: newAccessToken,
+      token: accessToken,
+      refreshToken: newRefreshToken,
     },
     200,
   );
