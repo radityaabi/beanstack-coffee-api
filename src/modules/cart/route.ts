@@ -66,7 +66,8 @@ const getCartRoute = createRoute({
 cartRoute.openapi(getCartRoute, async (c) => {
   const userId = c.get("userId" as never) as string;
   const cart = await getOrCreateCart(userId);
-  return c.json(cart, 200);
+  const parsed = CartSchema.parse(cart);
+  return c.json(parsed, 200);
 });
 
 // ─── PUT /cart/items ── Add product to cart ───

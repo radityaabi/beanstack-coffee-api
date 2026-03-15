@@ -1,15 +1,16 @@
 import { z } from "@hono/zod-openapi";
 import { ProductSchema } from "../product/schema";
-import { CartModelSchema } from "../../generated/zod/schemas";
+import {
+  CartModelSchema,
+  CartItemModelSchema,
+} from "../../generated/zod/schemas";
 
-export const CartItemSchema = z
-  .object({
-    id: z.string(),
-    productId: z.string(),
-    product: ProductSchema.omit({ createdAt: true, updatedAt: true }),
-    quantity: z.number().int(),
-    createdAt: z.string(),
-    updatedAt: z.string(),
+export const CartItemSchema = CartItemModelSchema.strip()
+  .extend({
+    product: ProductSchema,
+  })
+  .omit({
+    cartId: true,
   })
   .openapi("CartItem");
 
