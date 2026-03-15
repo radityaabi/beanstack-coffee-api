@@ -31,17 +31,19 @@ const getProductsRoute = createRoute({
     200: {
       description: "Paginated list of products",
       headers: z.object({
-        "Link": z.string().openapi({
-          description: "Pagination links (first, prev, next, last) in GitHub style",
-          example: '<http://example.com/products?page=1>; rel="first", <http://example.com/products?page=2>; rel="next">'
+        Link: z.string().openapi({
+          description:
+            "Pagination links (first, prev, next, last) in GitHub style",
+          example:
+            '<http://example.com/products?page=1>; rel="first", <http://example.com/products?page=2>; rel="next">',
         }),
         "X-Total-Count": z.string().openapi({
           description: "Total number of products matching the query",
-          example: "50"
+          example: "50",
         }),
         "X-Total-Pages": z.string().openapi({
           description: "Total number of pages available",
-          example: "5"
+          example: "5",
         }),
       }),
       content: { "application/json": { schema: ProductsSchema } },
@@ -52,8 +54,8 @@ const getProductsRoute = createRoute({
 productRoute.openapi(getProductsRoute, async (c) => {
   const query = c.req.valid("query");
 
-  const page = Math.max(1, parseInt(query.page || "1"));
-  const limit = Math.min(50, Math.max(1, parseInt(query.limit || "10")));
+  const page = Math.max(1, Number(query.page) || 1);
+  const limit = Math.min(50, Math.max(1, Number(query.limit) || 10));
   const skip = (page - 1) * limit;
 
   // Build where clause
@@ -63,14 +65,15 @@ productRoute.openapi(getProductsRoute, async (c) => {
   if (query.search) {
     where.OR = [
       { name: { contains: query.search, mode: "insensitive" } },
-      { type: { contains: query.search, mode: "insensitive" } },
       { description: { contains: query.search, mode: "insensitive" } },
     ];
   }
 
   // Filter by coffee type (supports multiple comma-separated values)
   if (query.type) {
-    const types = query.type.split(",").map((t: string) => t.trim());
+    const types = query.type
+      .split(",")
+      .map((t: string) => t.trim().toUpperCase());
     where.type = types.length === 1 ? types[0] : { in: types };
   }
 
@@ -100,17 +103,27 @@ productRoute.openapi(getProductsRoute, async (c) => {
     take: limit,
   });
 
-  const totalItems = products.length < limit ? skip + products.length : await prisma.product.count({ where });
-  const totalPages = Math.ceil(totalItems / limit);
+  const totalItems =
+    products.length < limit
+      ? skip + products.length
+      : await prisma.product.count({ where });
+  const totalPages = Math.max(1, Math.ceil(totalItems / limit));
 
   // Build Link header with pagination
   const url = new URL(c.req.url);
-  const baseUrl = `${url.origin}${url.pathname}`;  
-  
+  const baseUrl = `${url.origin}${url.pathname}`;
+
   const paramsBase = new URLSearchParams(
     Object.entries(query)
-      .filter(([key, variable]) => key !== "page" && key !== "limit" && variable !== undefined && variable !== null && variable !== "")
-      .map(([key, variable]) => [key, String(variable)])
+      .filter(
+        ([key, variable]) =>
+          key !== "page" &&
+          key !== "limit" &&
+          variable !== undefined &&
+          variable !== null &&
+          variable !== "",
+      )
+      .map(([key, variable]) => [key, String(variable)]),
   );
 
   paramsBase.set("limit", String(limit));
