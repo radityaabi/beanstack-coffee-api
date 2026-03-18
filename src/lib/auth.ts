@@ -2,7 +2,6 @@ import { sign, verify } from "hono/jwt";
 import { createMiddleware } from "hono/factory";
 import type { Context, Next } from "hono";
 import { prisma } from "./prisma";
-import { randomUUID } from "crypto";
 
 // ─── Secrets ───
 function getJwtSecret(): string {
@@ -45,7 +44,6 @@ export async function verifyToken(
 export async function generateRefreshToken(payload: {
   userId: string;
   email: string;
-  jti: string;
 }): Promise<string> {
   return await sign(
     {
@@ -60,11 +58,11 @@ export async function generateRefreshToken(payload: {
 
 export async function verifyRefreshToken(
   token: string,
-): Promise<{ userId: string; email: string; jti: string } | null> {
+): Promise<{ userId: string; email: string } | null> {
   try {
     const payload = await verify(token, getJwtSecret(), "HS256");
     if ((payload as any).type !== "refresh") return null;
-    return payload as { userId: string; email: string; jti: string };
+    return payload as { userId: string; email: string };
   } catch {
     return null;
   }
@@ -73,16 +71,14 @@ export async function verifyRefreshToken(
 export async function createTokenPair(user: {
   id: string;
   email: string;
-}): Promise<{ accessToken: string; refreshToken: string; jti: string }> {
+}): Promise<{ accessToken: string; refreshToken: string }> {
   const accessToken = await signToken({ userId: user.id, email: user.email });
-  const jti = randomUUID();
   const refreshToken = await generateRefreshToken({
     userId: user.id,
     email: user.email,
-    jti,
   });
 
-  return { accessToken, refreshToken, jti };
+  return { accessToken, refreshToken };
 }
 
 // ─── Auth Middleware ───

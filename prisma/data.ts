@@ -213,7 +213,7 @@ export const products: SeedProducts = [
     weight: 340,
     stockQuantity: 42,
     imageUrl:
-      "https://2xm7hdufl9.ucarecd.net/4ea32a41-32c9-420f-8aaa-deb26521774d/espressonusantarablend.png",
+      "https://2xm7hdufl9.ucarecd.net/93dd6dcf-7fc0-4d06-8758-5623c3d5a159/espressonusantarablend.png",
     description:
       "Blend espresso khusus yang memadukan Arabika Gayo, Robusta Temanggung, dan Arabika Flores. Dark roast dirancang untuk crema tebal, body kaya, dan profil rasa seimbang dengan nuansa dark chocolate, hazelnut, dan karamel.",
   },
@@ -225,7 +225,7 @@ export const products: SeedProducts = [
     weight: 340,
     stockQuantity: 5,
     imageUrl:
-      "https://2xm7hdufl9.ucarecd.net/a7482ec7-8c00-4000-87d5-767d642621c5/liberikamerantirare.png",
+      "https://2xm7hdufl9.ucarecd.net/eb905ec1-01b6-4ee1-8b7a-3f0f5c6bc97b/liberikamerantirare.png",
     description:
       "Biji Liberika langka dari Kepulauan Meranti, Riau. Dikenal dengan ukuran besar dan bentuk asimetris unik. Profil rasa fruity, smoky, dan floral dengan sentuhan nangka, beri gelap, serta gula terbakar. Kopi kolektor yang istimewa.",
   },
@@ -237,7 +237,7 @@ export const products: SeedProducts = [
     weight: 250,
     stockQuantity: 65,
     imageUrl:
-      "https://2xm7hdufl9.ucarecd.net/0e7aa3b9-c6ae-49b7-969c-b26a5dc2310b/coldbrewstarterpack.png",
+      "https://2xm7hdufl9.ucarecd.net/a6adf33d-0ad8-47de-a953-d354a3c6a506/coldbrewstarterpack.png",
     description:
       "Blend gilingan kasar yang dioptimalkan untuk ekstraksi cold brew. Perpaduan biji Brasil dan Sumatra dengan roast medium-dark menghasilkan cold brew yang halus, rendah asam, dengan nuansa kakao, vanila, dan gula merah. Cukup tambahkan air dan diamkan 12–24 jam.",
   },

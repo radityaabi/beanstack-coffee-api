@@ -51,6 +51,7 @@ export const RefreshResponseSchema = z
   .object({
     message: z.string(),
     token: z.string(),
+    refreshToken: z.string(),
   })
   .openapi("RefreshResponse");
 

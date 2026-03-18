@@ -77,7 +77,7 @@ authRoute.openapi(registerRoute, async (c) => {
     data: { username, email, password: hashedPassword },
   });
 
-  const { accessToken, refreshToken, jti } = await createTokenPair(user);
+  const { accessToken, refreshToken } = await createTokenPair(user);
 
   await prisma.userToken.deleteMany({ where: { userId: user.id } });
 
@@ -85,7 +85,7 @@ authRoute.openapi(registerRoute, async (c) => {
     data: {
       userId: user.id,
       accessToken,
-      refreshToken: jti,
+      refreshToken,
       expiresAt: refreshTokenExpiresAt(),
     },
   });
@@ -134,7 +134,7 @@ authRoute.openapi(loginRoute, async (c) => {
     return c.json({ error: "Invalid email or password" }, 401);
   }
 
-  const { accessToken, refreshToken, jti } = await createTokenPair(user);
+  const { accessToken, refreshToken } = await createTokenPair(user);
 
   await prisma.userToken.deleteMany({ where: { userId: user.id } });
 
@@ -142,7 +142,7 @@ authRoute.openapi(loginRoute, async (c) => {
     data: {
       userId: user.id,
       accessToken,
-      refreshToken: jti,
+      refreshToken,
       expiresAt: refreshTokenExpiresAt(),
     },
   });
@@ -255,10 +255,7 @@ authRoute.openapi(refreshRoute, async (c) => {
   }
 
   const userToken = await prisma.userToken.findFirst({
-    where: {
-      userId: payload.userId,
-      refreshToken: payload.jti,
-    },
+    where: { userId: payload.userId, refreshToken },
     include: { user: true },
   });
 
@@ -272,17 +269,15 @@ authRoute.openapi(refreshRoute, async (c) => {
     );
   }
 
-  const {
-    accessToken,
-    refreshToken: newRefreshToken,
-    jti: newJti,
-  } = await createTokenPair(userToken.user);
+  const { accessToken, refreshToken: newRefreshToken } = await createTokenPair(
+    userToken.user,
+  );
 
   await prisma.userToken.update({
     where: { id: userToken.id },
     data: {
       accessToken,
-      refreshToken: newJti,
+      refreshToken: newRefreshToken,
       expiresAt: refreshTokenExpiresAt(),
     },
   });
