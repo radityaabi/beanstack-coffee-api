@@ -197,7 +197,7 @@ export const products: SeedProducts = [
     name: "Sunda Hejo Green Bean Arabica 1kg",
     sku: "CF-BEANS-017",
     type: "ARABICA" as const,
-    price: 140000,
+    price: 640000,
     weight: 1000,
     stockQuantity: 55,
     imageUrl:
