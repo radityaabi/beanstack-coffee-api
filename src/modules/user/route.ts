@@ -25,7 +25,6 @@ userRoute.openapi(getUsersRoute, async (c) => {
     select: {
       id: true,
       username: true,
-      email: true,
       createdAt: true,
       updatedAt: true,
     },
