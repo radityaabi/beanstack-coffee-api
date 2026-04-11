@@ -70,7 +70,7 @@ const getCartRoute = createRoute({
 });
 
 cartRoute.openapi(getCartRoute, async (c) => {
-  const userId = c.get("userId" as never) as string;
+  const userId = (c.get("user" as never) as { id: string }).id;
   try {
     const cart = await getOrCreateCart(userId);
     const parsed = CartSchema.parse(cart);
@@ -107,7 +107,7 @@ const addToCartRoute = createRoute({
 });
 
 cartRoute.openapi(addToCartRoute, async (c) => {
-  const userId = c.get("userId" as never) as string;
+  const userId = (c.get("user" as never) as { id: string }).id;
   const { productId, quantity } = c.req.valid("json");
 
   try {
@@ -190,7 +190,7 @@ const removeCartItemRoute = createRoute({
 });
 
 cartRoute.openapi(removeCartItemRoute, async (c) => {
-  const userId = c.get("userId" as never) as string;
+  const userId = (c.get("user" as never) as { id: string }).id;
   const { id } = c.req.valid("param");
 
   try {
@@ -244,7 +244,7 @@ const updateCartItemRoute = createRoute({
 });
 
 cartRoute.openapi(updateCartItemRoute, async (c) => {
-  const userId = c.get("userId" as never) as string;
+  const userId = (c.get("user" as never) as { id: string }).id;
   const { id } = c.req.valid("param");
   const { quantity } = c.req.valid("json");
 
