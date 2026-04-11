@@ -24,6 +24,7 @@ userRoute.openapi(getUsersRoute, async (c) => {
   const users = await prisma.user.findMany({
     select: {
       id: true,
+      name: true,
       username: true,
       createdAt: true,
       updatedAt: true,
@@ -64,6 +65,7 @@ userRoute.openapi(getUserByUsernameRoute, async (c) => {
     where: { username },
     select: {
       id: true,
+      name: true,
       username: true,
       email: true,
       createdAt: true,

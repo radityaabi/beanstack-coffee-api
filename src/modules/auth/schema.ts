@@ -9,8 +9,9 @@ export const PasswordSchema = z
   .regex(/[0-9]/, "Password must contain at least one number")
   .openapi({ example: "Securepassword123" });
 
-export const RegisterSchema = z
+export const RegisterUserSchema = z
   .object({
+    name: z.string().min(1).openapi({ example: "John Doe" }),
     username: z
       .string()
       .min(3)
@@ -21,7 +22,7 @@ export const RegisterSchema = z
   })
   .openapi("Register");
 
-export const LoginSchema = z
+export const LoginUserSchema = z
   .object({
     email: z.email().openapi({ example: "user@example.com" }),
     password: z.string().min(1).openapi({ example: "Securepassword123" }),
@@ -33,6 +34,7 @@ export const AuthResponseSchema = z
     message: z.string(),
     user: z.object({
       id: z.string(),
+      name: z.string(),
       username: z.string(),
       email: z.email(),
     }),

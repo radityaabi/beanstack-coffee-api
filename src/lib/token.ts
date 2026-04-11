@@ -1,6 +1,5 @@
 import { sign, verify } from "hono/jwt";
-import { createMiddleware } from "hono/factory";
-import type { Context, Next } from "hono";
+import type { Context } from "hono";
 import { getCookie, setCookie, deleteCookie } from "hono/cookie";
 
 // ─── Secrets ───
@@ -73,7 +72,7 @@ export async function verifyRefreshToken(
   }
 }
 
-export async function createTokenPair(user: {
+export async function createToken(user: {
   id: string;
   email: string;
 }): Promise<{ accessToken: string; refreshToken: string }> {
@@ -123,25 +122,3 @@ export function clearAuthCookies(c: Context): void {
   deleteCookie(c, "access_token", cookieOptions);
   deleteCookie(c, "refresh_token", cookieOptions);
 }
-
-// ─── Auth Middleware ───
-export const authMiddleware = createMiddleware(
-  async (c: Context, next: Next) => {
-    const token = getCookie(c, "access_token");
-
-    if (!token) {
-      return c.json({ error: "Unauthorized. No access token." }, 401);
-    }
-
-    const payload = await verifyToken(token);
-
-    if (!payload) {
-      return c.json({ error: "Invalid or expired token." }, 401);
-    }
-
-    c.set("userId" as never, payload.userId as never);
-    c.set("email" as never, payload.email as never);
-
-    await next();
-  },
-);

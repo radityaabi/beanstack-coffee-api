@@ -1,24 +1,24 @@
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import { prisma } from "../../lib/prisma";
-import { hashSync, compareSync } from "bcryptjs";
+import { hashPassword, verifyPassword } from "../../lib/hash";
 import { getCookie } from "hono/cookie";
 import {
-  createTokenPair,
+  createToken,
   verifyRefreshToken,
   REFRESH_TOKEN_EXPIRY_DAYS,
-  authMiddleware,
   setAuthCookies,
   clearAuthCookies,
-} from "../../lib/auth";
+} from "../../lib/token";
+import { authMiddleware, type AuthMiddlewareEnv } from "./middleware";
 import {
-  RegisterSchema,
-  LoginSchema,
+  RegisterUserSchema,
+  LoginUserSchema,
   AuthResponseSchema,
   RefreshResponseSchema,
   MeResponseSchema,
 } from "./schema";
 
-export const authRoute = new OpenAPIHono({
+export const authRoute = new OpenAPIHono<AuthMiddlewareEnv>({
   defaultHook: (result, c) => {
     if (!result.success) {
       return c.json(
@@ -50,7 +50,7 @@ const registerRoute = createRoute({
   summary: "Register a new user",
   request: {
     body: {
-      content: { "application/json": { schema: RegisterSchema } },
+      content: { "application/json": { schema: RegisterUserSchema } },
     },
   },
   responses: {
@@ -63,26 +63,41 @@ const registerRoute = createRoute({
 });
 
 authRoute.openapi(registerRoute, async (c) => {
-  const { username, email, password } = c.req.valid("json");
+  const validatedBody = c.req.valid("json");
 
   const existingUser = await prisma.user.findFirst({
-    where: { OR: [{ email }, { username }] },
+    where: {
+      OR: [
+        { email: validatedBody.email },
+        { username: validatedBody.username },
+      ],
+    },
   });
 
   if (existingUser) {
     return c.json({ error: "Username or email already exists" }, 409);
   }
 
-  const hashedPassword = hashSync(password, 10);
+  const hashedPassword = await hashPassword(validatedBody.password);
 
   const user = await prisma.user.create({
-    data: { username, email, password: hashedPassword },
+    data: {
+      name: validatedBody.name,
+      username: validatedBody.username,
+      email: validatedBody.email,
+      password: { create: { hash: hashedPassword } },
+    },
   });
 
   return c.json(
     {
       message: "User registered successfully",
-      user: { id: user.id, username: user.username, email: user.email },
+      user: {
+        id: user.id,
+        name: user.name,
+        username: user.username,
+        email: user.email,
+      },
     },
     201,
   );
@@ -96,7 +111,7 @@ const loginRoute = createRoute({
   summary: "Login user",
   request: {
     body: {
-      content: { "application/json": { schema: LoginSchema } },
+      content: { "application/json": { schema: LoginUserSchema } },
     },
   },
   responses: {
@@ -111,17 +126,20 @@ const loginRoute = createRoute({
 authRoute.openapi(loginRoute, async (c) => {
   const { email, password } = c.req.valid("json");
 
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) {
+  const user = await prisma.user.findUnique({
+    where: { email },
+    include: { password: true },
+  });
+  if (!user || !user.password) {
     return c.json({ error: "Invalid email or password" }, 401);
   }
 
-  const validPassword = compareSync(password, user.password);
+  const validPassword = await verifyPassword(user.password.hash, password);
   if (!validPassword) {
     return c.json({ error: "Invalid email or password" }, 401);
   }
 
-  const { accessToken, refreshToken } = await createTokenPair(user);
+  const { accessToken, refreshToken } = await createToken(user);
 
   await prisma.userToken.deleteMany({ where: { userId: user.id } });
 
@@ -138,7 +156,12 @@ authRoute.openapi(loginRoute, async (c) => {
   return c.json(
     {
       message: "Login successful",
-      user: { id: user.id, username: user.username, email: user.email },
+      user: {
+        id: user.id,
+        name: user.name,
+        username: user.username,
+        email: user.email,
+      },
     },
     200,
   );
@@ -163,24 +186,23 @@ const meRoute = createRoute({
 authRoute.use("/me", authMiddleware);
 
 authRoute.openapi(meRoute, async (c) => {
-  const userId = c.get("userId" as never) as string;
-
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      username: true,
-      email: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
+  const user = c.get("user");
 
   if (!user) {
-    return c.json({ error: "User not found" }, 404);
+    return c.json({ error: "User not found." }, 404);
   }
 
-  return c.json({ ...user }, 200);
+  return c.json(
+    {
+      id: user.id,
+      name: user.name,
+      username: user.username,
+      email: user.email,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    },
+    200,
+  );
 });
 
 // ─── POST /auth/logout ── Protected ───
@@ -259,7 +281,7 @@ authRoute.openapi(refreshRoute, async (c) => {
     );
   }
 
-  const { accessToken, refreshToken: newRefreshToken } = await createTokenPair(
+  const { accessToken, refreshToken: newRefreshToken } = await createToken(
     userToken.user,
   );
 

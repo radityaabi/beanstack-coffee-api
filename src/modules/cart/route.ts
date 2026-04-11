@@ -1,6 +1,6 @@
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import { prisma } from "../../lib/prisma";
-import { authMiddleware } from "../../lib/auth";
+import { authMiddleware } from "../auth/middleware";
 import {
   CartSchema,
   AddToCartSchema,
