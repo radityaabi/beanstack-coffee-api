@@ -43,7 +43,7 @@ export async function verifyToken(
       algorithms: ["HS256"],
     });
     if ((payload as any).type !== "access") return null;
-    return payload as { userId: string };
+    return { userId: (payload as any).id };
   } catch {
     return null;
   }
