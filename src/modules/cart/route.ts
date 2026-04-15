@@ -15,7 +15,7 @@ const tags = ["Cart"];
 // Apply auth middleware to all cart routes
 cartRoute.use("/*", checkAuthMiddleware);
 
-// Helper: get or create cart for user
+// Helper: get or create cart for user, recalculates and persists prices
 async function getOrCreateCart(userId: string) {
   try {
     let cart = await prisma.cart.findUnique({
@@ -40,11 +40,34 @@ async function getOrCreateCart(userId: string) {
       });
     }
 
-    const totalPrice = cart.items.reduce(
-      (total, item) => total + item.product.price * item.quantity,
+    // Recalculate and persist subTotalPrice for each item & totalPrice for the cart
+    const updatedItems = await Promise.all(
+      cart.items.map((item) => {
+        const subTotalPrice = item.product.price * item.quantity;
+        if (item.subTotalPrice !== subTotalPrice) {
+          return prisma.cartItem.update({
+            where: { id: item.id },
+            data: { subTotalPrice },
+            include: { product: true },
+          });
+        }
+        return { ...item, subTotalPrice };
+      }),
+    );
+
+    const totalPrice = updatedItems.reduce(
+      (total, item) => total + item.subTotalPrice,
       0,
     );
-    return { ...cart, totalPrice };
+
+    if (cart.totalPrice !== totalPrice) {
+      await prisma.cart.update({
+        where: { id: cart.id },
+        data: { totalPrice },
+      });
+    }
+
+    return { ...cart, items: updatedItems, totalPrice };
   } catch (error) {
     console.error("Error getting or creating cart:", error);
     throw new Error("Failed to get or create cart");
@@ -139,18 +162,29 @@ cartRoute.openapi(addToCartRoute, async (c) => {
         };
       }
 
-      const [updatedItem] = await Promise.all([
-        transaction.cartItem.upsert({
-          where: { cartId_productId: { cartId: cart.id, productId } },
-          create: { cartId: cart.id, productId, quantity },
-          update: { quantity: newQuantity },
-          include: { product: true },
-        }),
-        transaction.cart.update({
-          where: { id: cart.id },
-          data: { updatedAt: new Date() },
-        }),
-      ]);
+      const subTotalPrice = product.price * newQuantity;
+
+      const updatedItem = await transaction.cartItem.upsert({
+        where: { cartId_productId: { cartId: cart.id, productId } },
+        create: { cartId: cart.id, productId, quantity, subTotalPrice: product.price * quantity },
+        update: { quantity: newQuantity, subTotalPrice },
+        include: { product: true },
+      });
+
+      // Recalculate totalPrice from all items
+      const allItems = await transaction.cartItem.findMany({
+        where: { cartId: cart.id },
+        include: { product: true },
+      });
+      const totalPrice = allItems.reduce(
+        (sum, item) => sum + item.subTotalPrice,
+        0,
+      );
+
+      await transaction.cart.update({
+        where: { id: cart.id },
+        data: { totalPrice, updatedAt: new Date() },
+      });
 
       return { cart, updatedItem };
     });
@@ -198,13 +232,21 @@ cartRoute.openapi(removeCartItemRoute, async (c) => {
 
       if (!cartItem) throw { status: 404, error: "Cart item not found" };
 
-      await Promise.all([
-        transaction.cartItem.delete({ where: { id } }),
-        transaction.cart.update({
-          where: { id: cartItem.cartId },
-          data: { updatedAt: new Date() },
-        }),
-      ]);
+      await transaction.cartItem.delete({ where: { id } });
+
+      // Recalculate totalPrice from remaining items
+      const remainingItems = await transaction.cartItem.findMany({
+        where: { cartId: cartItem.cartId },
+      });
+      const totalPrice = remainingItems.reduce(
+        (sum, item) => sum + item.subTotalPrice,
+        0,
+      );
+
+      await transaction.cart.update({
+        where: { id: cartItem.cartId },
+        data: { totalPrice, updatedAt: new Date() },
+      });
     });
 
     const updatedCart = await getOrCreateCart(userId);
@@ -259,13 +301,27 @@ cartRoute.openapi(updateCartItemRoute, async (c) => {
         };
       }
 
-      await Promise.all([
-        transaction.cartItem.update({ where: { id }, data: { quantity } }),
-        transaction.cart.update({
-          where: { id: cartItem.cartId },
-          data: { updatedAt: new Date() },
-        }),
-      ]);
+      const subTotalPrice = cartItem.product.price * quantity;
+
+      await transaction.cartItem.update({
+        where: { id },
+        data: { quantity, subTotalPrice },
+      });
+
+      // Recalculate totalPrice from all items
+      const allItems = await transaction.cartItem.findMany({
+        where: { cartId: cartItem.cartId },
+      });
+      const totalPrice = allItems.reduce(
+        (sum, item) =>
+          sum + (item.id === id ? subTotalPrice : item.subTotalPrice),
+        0,
+      );
+
+      await transaction.cart.update({
+        where: { id: cartItem.cartId },
+        data: { totalPrice, updatedAt: new Date() },
+      });
     });
 
     const updatedCart = await getOrCreateCart(userId);

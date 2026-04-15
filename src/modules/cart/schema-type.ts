@@ -21,7 +21,6 @@ export const CartItemSchema = CartItemModelSchema.strip()
 
 export const CartSchema = CartModelSchema.extend({
   items: z.array(CartItemSchema),
-  totalPrice: z.number().int().openapi({ example: 100000 }),
 }).openapi("Cart");
 
 export const AddToCartSchema = z
