@@ -1,10 +1,18 @@
-import { SeedProducts } from "../src/modules/product/schema-type";
+import type { SeedCategories } from "../src/modules/category/schema-type";
+import type { SeedProducts } from "../src/modules/product/schema-type";
+
+export const categories: SeedCategories = [
+  { name: "Arabica", slug: "arabica" },
+  { name: "Robusta", slug: "robusta" },
+  { name: "Liberica", slug: "liberica" },
+  { name: "Blend", slug: "blend" },
+];
 
 export const products: SeedProducts = [
   {
     name: "Mens Rea Blend 340g",
     sku: "CF-BEANS-001",
-    type: "BLEND" as const,
+    categorySlug: "blend",
     price: 149000,
     weight: 340,
     stockQuantity: 50,
@@ -16,7 +24,7 @@ export const products: SeedProducts = [
   {
     name: "Toraja Kalosi Arabica 250g",
     sku: "CF-BEANS-002",
-    type: "ARABICA" as const,
+    categorySlug: "arabica",
     price: 195000,
     weight: 250,
     stockQuantity: 35,
@@ -28,7 +36,7 @@ export const products: SeedProducts = [
   {
     name: "Gayo Mountain Reserve 340g",
     sku: "CF-BEANS-003",
-    type: "ARABICA" as const,
+    categorySlug: "arabica",
     price: 220000,
     weight: 340,
     stockQuantity: 25,
@@ -40,7 +48,7 @@ export const products: SeedProducts = [
   {
     name: "Java Preanger Estate 250g",
     sku: "CF-BEANS-004",
-    type: "ARABICA" as const,
+    categorySlug: "arabica",
     price: 185000,
     weight: 250,
     stockQuantity: 40,
@@ -52,7 +60,7 @@ export const products: SeedProducts = [
   {
     name: "Lampung Robusta Premium 500g",
     sku: "CF-BEANS-005",
-    type: "ROBUSTA" as const,
+    categorySlug: "robusta",
     price: 89000,
     weight: 500,
     stockQuantity: 80,
@@ -64,7 +72,7 @@ export const products: SeedProducts = [
   {
     name: "Bali Kintamani Natural 250g",
     sku: "CF-BEANS-006",
-    type: "ARABICA" as const,
+    categorySlug: "arabica",
     price: 245000,
     weight: 250,
     stockQuantity: 15,
@@ -76,7 +84,7 @@ export const products: SeedProducts = [
   {
     name: "Flores Bajawa Honey 250g",
     sku: "CF-BEANS-007",
-    type: "ARABICA" as const,
+    categorySlug: "arabica",
     price: 210000,
     weight: 250,
     stockQuantity: 20,
@@ -88,7 +96,7 @@ export const products: SeedProducts = [
   {
     name: "Sumatra Mandheling Gold 340g",
     sku: "CF-BEANS-008",
-    type: "ARABICA" as const,
+    categorySlug: "arabica",
     price: 175000,
     weight: 340,
     stockQuantity: 45,
@@ -100,7 +108,7 @@ export const products: SeedProducts = [
   {
     name: "Temanggung Fine Robusta 250g",
     sku: "CF-BEANS-009",
-    type: "ROBUSTA" as const,
+    categorySlug: "robusta",
     price: 95000,
     weight: 250,
     stockQuantity: 60,
@@ -112,7 +120,7 @@ export const products: SeedProducts = [
   {
     name: "Papua Wamena Highland 340g",
     sku: "CF-BEANS-010",
-    type: "ARABICA" as const,
+    categorySlug: "arabica",
     price: 285000,
     weight: 340,
     stockQuantity: 10,
@@ -124,7 +132,7 @@ export const products: SeedProducts = [
   {
     name: "Nusantara Morning Blend 250g",
     sku: "CF-BEANS-011",
-    type: "BLEND" as const,
+    categorySlug: "blend",
     price: 125000,
     weight: 250,
     stockQuantity: 70,
@@ -136,7 +144,7 @@ export const products: SeedProducts = [
   {
     name: "Aceh Gayo Organic 340g",
     sku: "CF-BEANS-012",
-    type: "ARABICA" as const,
+    categorySlug: "arabica",
     price: 235000,
     weight: 340,
     stockQuantity: 18,
@@ -148,7 +156,7 @@ export const products: SeedProducts = [
   {
     name: "Sulawesi Enrekang Washed 250g",
     sku: "CF-BEANS-013",
-    type: "ARABICA" as const,
+    categorySlug: "arabica",
     price: 178000,
     weight: 250,
     stockQuantity: 30,
@@ -160,7 +168,7 @@ export const products: SeedProducts = [
   {
     name: "West Java Ciwidey Peaberry 250g",
     sku: "CF-BEANS-014",
-    type: "ARABICA" as const,
+    categorySlug: "arabica",
     price: 265000,
     weight: 250,
     stockQuantity: 8,
@@ -172,7 +180,7 @@ export const products: SeedProducts = [
   {
     name: "Bengkulu Rejang Lebong 250g",
     sku: "CF-BEANS-015",
-    type: "ARABICA" as const,
+    categorySlug: "arabica",
     price: 155000,
     weight: 250,
     stockQuantity: 38,
@@ -184,7 +192,7 @@ export const products: SeedProducts = [
   {
     name: "Kopi Joss Traditional Robusta 250g",
     sku: "CF-BEANS-016",
-    type: "ROBUSTA" as const,
+    categorySlug: "robusta",
     price: 75000,
     weight: 250,
     stockQuantity: 100,
@@ -196,7 +204,7 @@ export const products: SeedProducts = [
   {
     name: "Sunda Hejo Green Bean Arabica 1kg",
     sku: "CF-BEANS-017",
-    type: "ARABICA" as const,
+    categorySlug: "arabica",
     price: 640000,
     weight: 1000,
     stockQuantity: 55,
@@ -208,7 +216,7 @@ export const products: SeedProducts = [
   {
     name: "Espresso Nusantara Blend 340g",
     sku: "CF-BEANS-018",
-    type: "BLEND" as const,
+    categorySlug: "blend",
     price: 165000,
     weight: 340,
     stockQuantity: 42,
@@ -220,7 +228,7 @@ export const products: SeedProducts = [
   {
     name: "Liberika Meranti Rare Edition 340g",
     sku: "CF-BEANS-019",
-    type: "BLEND" as const,
+    categorySlug: "liberica",
     price: 310000,
     weight: 340,
     stockQuantity: 5,
@@ -232,7 +240,7 @@ export const products: SeedProducts = [
   {
     name: "Cold Brew Starter Pack 250g",
     sku: "CF-BEANS-020",
-    type: "BLEND" as const,
+    categorySlug: "blend",
     price: 115000,
     weight: 250,
     stockQuantity: 65,

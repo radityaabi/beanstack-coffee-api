@@ -22,7 +22,7 @@ async function getOrCreateCart(userId: string) {
       where: { userId },
       include: {
         items: {
-          include: { product: true },
+          include: { product: { include: { category: true } } },
           orderBy: { createdAt: "desc" },
         },
       },
@@ -33,7 +33,7 @@ async function getOrCreateCart(userId: string) {
         data: { userId },
         include: {
           items: {
-            include: { product: true },
+            include: { product: { include: { category: true } } },
             orderBy: { createdAt: "desc" },
           },
         },
@@ -48,7 +48,7 @@ async function getOrCreateCart(userId: string) {
           return prisma.cartItem.update({
             where: { id: item.id },
             data: { subTotalPrice },
-            include: { product: true },
+            include: { product: { include: { category: true } } },
           });
         }
         return { ...item, subTotalPrice };
@@ -168,13 +168,13 @@ cartRoute.openapi(addToCartRoute, async (c) => {
         where: { cartId_productId: { cartId: cart.id, productId } },
         create: { cartId: cart.id, productId, quantity, subTotalPrice: product.price * quantity },
         update: { quantity: newQuantity, subTotalPrice },
-        include: { product: true },
+        include: { product: { include: { category: true } } },
       });
 
       // Recalculate totalPrice from all items
       const allItems = await transaction.cartItem.findMany({
         where: { cartId: cart.id },
-        include: { product: true },
+        include: { product: { include: { category: true } } },
       });
       const totalPrice = allItems.reduce(
         (sum, item) => sum + item.subTotalPrice,
@@ -290,7 +290,7 @@ cartRoute.openapi(updateCartItemRoute, async (c) => {
     await prisma.$transaction(async (transaction) => {
       const cartItem = await transaction.cartItem.findFirst({
         where: { id, cart: { userId } },
-        include: { product: true },
+        include: { product: { include: { category: true } } },
       });
 
       if (!cartItem) throw { status: 404, error: "Cart item not found" };

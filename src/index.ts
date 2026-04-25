@@ -5,6 +5,7 @@ import { serveStatic } from "hono/bun";
 import { Scalar } from "@scalar/hono-api-reference";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { productRoute } from "./modules/product/route";
+import { categoryRoute } from "./modules/category/route";
 import { authRoute } from "./modules/auth/route";
 import { userRoute } from "./modules/user/route";
 import { cartRoute } from "./modules/cart/route";
@@ -29,6 +30,7 @@ app.use("/images/*", serveStatic({ root: "./public" }));
 
 // ─── Routes ───
 app.route("/products", productRoute);
+app.route("/categories", categoryRoute);
 app.route("/auth", authRoute);
 app.route("/users", userRoute);
 app.route("/cart", cartRoute);
@@ -42,6 +44,7 @@ app.get("/api", (c) => {
     docs: "/",
     endpoints: {
       products: "/products",
+      categories: "/categories",
       auth: "/auth",
       users: "/users",
       cart: "/cart",

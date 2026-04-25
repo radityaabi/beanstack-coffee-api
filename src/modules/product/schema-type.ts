@@ -1,14 +1,15 @@
 import { z } from "@hono/zod-openapi";
 import { ProductModelSchema } from "../../generated/zod/schemas";
-
-export const CoffeeTypeEnum = z.enum(["ARABICA", "ROBUSTA", "BLEND"]);
+import { CategorySchema } from "../category/schema-type";
 
 export const ProductBaseSchema = ProductModelSchema.omit({
   cartItems: true,
+  category: true,
 }).extend({
   name: z.string().min(1).max(100).openapi({ example: "Mens Rea Blend" }),
   sku: z.string().min(1).max(100).openapi({ example: "CF-BEANS-001" }),
-  type: CoffeeTypeEnum,
+  categoryId: z.string().openapi({ example: "01JMXYZ..." }),
+  category: CategorySchema,
   price: z.number().int().positive().openapi({ example: 149000 }),
   weight: z
     .number()
@@ -27,8 +28,12 @@ export const ProductBaseSchema = ProductModelSchema.omit({
 export const SeedProductSchema = ProductBaseSchema.omit({
   id: true,
   slug: true,
+  categoryId: true,
+  category: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  categorySlug: z.string(),
 });
 
 export const SeedProductsSchema = z
@@ -50,6 +55,7 @@ export const GetProductByIdParamSchema = z.object({
 export const CreateProductSchema = ProductBaseSchema.omit({
   id: true,
   slug: true,
+  category: true,
   createdAt: true,
   updatedAt: true,
 }).openapi("CreateProduct");
@@ -57,7 +63,7 @@ export const CreateProductSchema = ProductBaseSchema.omit({
 export const UpdateProductSchema = CreateProductSchema.extend({
   sku: z.string().min(1).max(100).optional(),
   name: z.string().min(1).max(100).optional(),
-  type: CoffeeTypeEnum.optional(),
+  categoryId: z.string().optional(),
   price: z.number().int().positive().optional(),
   weight: z.number().int().positive().optional(),
   stockQuantity: z.number().int().min(0).optional(),
@@ -67,10 +73,10 @@ export const ProductQuerySchema = z.object({
   page: z.string().optional().openapi({ example: "1" }),
   limit: z.string().optional().openapi({ example: "10" }),
   search: z.string().optional().openapi({ example: "arabica" }),
-  type: z.string().optional().openapi({
-    example: "ARABICA",
+  categoryId: z.string().optional().openapi({
+    example: "01JMXYZ...",
     description:
-      "Filter by coffee type. Supports multiple values separated by commas (e.g. ARABICA,ROBUSTA). Valid values: ARABICA, ROBUSTA, BLEND",
+      "Filter by category ID. Supports multiple values separated by commas.",
   }),
   minPrice: z.string().optional().openapi({ example: "50000" }),
   maxPrice: z.string().optional().openapi({ example: "200000" }),

@@ -16,6 +16,9 @@ export const productRoute = new OpenAPIHono();
 
 const tags = ["Products"];
 
+// Common include for category relation
+const productInclude = { category: true } as const;
+
 // ─── GET /products ── List with pagination, filtering, searching ───
 const getProductsRoute = createRoute({
   method: "get",
@@ -69,12 +72,10 @@ productRoute.openapi(getProductsRoute, async (c) => {
     ];
   }
 
-  // Filter by coffee type (supports multiple comma-separated values)
-  if (query.type) {
-    const types = query.type
-      .split(",")
-      .map((t: string) => t.trim().toUpperCase());
-    where.type = types.length === 1 ? types[0] : { in: types };
+  // Filter by category ID (supports multiple comma-separated values)
+  if (query.categoryId) {
+    const ids = query.categoryId.split(",").map((id: string) => id.trim());
+    where.categoryId = ids.length === 1 ? ids[0] : { in: ids };
   }
 
   // Filter by price range
@@ -101,6 +102,7 @@ productRoute.openapi(getProductsRoute, async (c) => {
     orderBy,
     skip,
     take: limit,
+    include: productInclude,
   });
 
   const totalItems =
@@ -169,7 +171,10 @@ const getProductBySlugRoute = createRoute({
 productRoute.openapi(getProductBySlugRoute, async (c) => {
   const { slug } = c.req.valid("param");
 
-  const product = await prisma.product.findUnique({ where: { slug } });
+  const product = await prisma.product.findUnique({
+    where: { slug },
+    include: productInclude,
+  });
 
   if (!product) {
     return c.json({ error: "Product not found" }, 404);
@@ -211,6 +216,7 @@ productRoute.openapi(createProductRoute, async (c) => {
   try {
     const product = await prisma.product.create({
       data: { ...payload, slug },
+      include: productInclude,
     });
 
     return c.json(
@@ -293,6 +299,7 @@ productRoute.openapi(updateProductRoute, async (c) => {
     const product = await prisma.product.update({
       where: { id },
       data: { ...payload, slug: createSlug(payload.name) },
+      include: productInclude,
     });
 
     return c.json(ProductSchema.parse(product), 200);
@@ -338,6 +345,7 @@ productRoute.openapi(patchProductRoute, async (c) => {
         ...payload,
         ...(payload.name && { slug: createSlug(payload.name) }),
       },
+      include: productInclude,
     });
 
     return c.json(ProductSchema.parse(product), 200);
