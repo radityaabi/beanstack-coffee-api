@@ -18,14 +18,18 @@ async function main() {
 
   // 2. Build a slug→id lookup map
   const allCategories = await prisma.category.findMany();
-  const categoryMap = new Map(allCategories.map((c) => [c.slug, c.id]));
+  const categoryMap = new Map(
+    allCategories.map((category) => [category.slug, category.id]),
+  );
 
   // 3. Upsert products using categoryId
   console.log("\n☕ Seeding products...");
   for (const product of products) {
     const categoryId = categoryMap.get(product.categorySlug);
     if (!categoryId) {
-      console.error(` ❌ Category "${product.categorySlug}" not found for ${product.name}`);
+      console.error(
+        ` ❌ Category "${product.categorySlug}" not found for ${product.name}`,
+      );
       continue;
     }
 
@@ -48,12 +52,14 @@ async function main() {
     console.log(` 🫘  ${result.name} (${result.sku})`);
   }
 
-  console.log(`\n🎉 Seeded ${categories.length} categories and ${products.length} products successfully!`);
+  console.log(
+    `\n🎉 Seeded ${categories.length} categories and ${products.length} products successfully!`,
+  );
 }
 
 main()
-  .catch((e) => {
-    console.error("❌ Seed failed:", e);
+  .catch((error) => {
+    console.error("❌ Seed failed:", error);
     process.exit(1);
   })
   .finally(async () => {
