@@ -11,29 +11,47 @@
 
 Products:
 
-| Endpoint          | HTTP     | Description          |
-| ----------------- | -------- | -------------------- |
-| `/products`       | `GET`    | Get all products     |
-| `/products/:slug` | `GET`    | Get product by slug  |
-| `/products`       | `POST`   | Add new product      |
-| `/products/:id`   | `DELETE` | Delete product by id |
-| `/products/:id`   | `PUT`    | Update product by id |
-| `/products/:id`   | `PATCH`  | Update product by id |
+| Endpoint          | HTTP     | Description            |
+| ----------------- | -------- | ---------------------- |
+| `/products`       | `GET`    | Get all products       |
+| `/products/:slug` | `GET`    | Get product by slug    |
+| `/products`       | `POST`   | Add new product        |
+| `/products/:id`   | `PUT`    | Update product by id   |
+| `/products/:id`   | `PATCH`  | Partial update product |
+| `/products/:id`   | `DELETE` | Delete product by id   |
+
+Categories:
+
+| Endpoint          | HTTP     | Description           |
+| ----------------- | -------- | --------------------- |
+| `/categories`     | `GET`    | Get all categories    |
+| `/categories`     | `POST`   | Create new category   |
+| `/categories/:id` | `DELETE` | Delete category by id |
+
+Users:
+
+| Endpoint           | HTTP  | Permission |
+| ------------------ | ----- | ---------- |
+| `/users`           | `GET` | Public     |
+| `/users/:username` | `GET` | Public     |
 
 Auth:
 
-| Endpoint           | HTTP     | Permission    |
-| ------------------ | -------- | ------------- |
-| `/users`           | `GET`    | Public        |
-| `/users/:username` | `GET`    | Public        |
-| `/auth/register`   | `POST`   | Public        |
-| `/auth/login`      | `POST`   | Public        |
-| `/auth/me`         | `GET`    | Authenticated |
-| `/auth/logout`     | `POST`   | Authenticated |
-| `/cart`            | `GET`    | Authenticated |
-| `/cart/items`      | `POST`   | Authenticated |
-| `/cart/items/:id`  | `DELETE` | Authenticated |
-| `/cart/items/:id`  | `PUT`    | Authenticated |
+| Endpoint         | HTTP   | Permission    |
+| ---------------- | ------ | ------------- |
+| `/auth/register` | `POST` | Public        |
+| `/auth/login`    | `POST` | Public        |
+| `/auth/me`       | `GET`  | Authenticated |
+| `/auth/logout`   | `POST` | Authenticated |
+
+Cart:
+
+| Endpoint          | HTTP     | Permission    |
+| ----------------- | -------- | ------------- |
+| `/cart`           | `GET`    | Authenticated |
+| `/cart/items`     | `POST`   | Authenticated |
+| `/cart/items/:id` | `PUT`    | Authenticated |
+| `/cart/items/:id` | `DELETE` | Authenticated |
 
 ## Getting Started
 
