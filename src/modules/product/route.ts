@@ -11,6 +11,7 @@ import {
   UpdateProductSchema,
   ProductQuerySchema,
 } from "./schema-type";
+import { Prisma } from "../../generated/prisma/browser";
 
 export const productRoute = new OpenAPIHono();
 
@@ -62,7 +63,7 @@ productRoute.openapi(getProductsRoute, async (c) => {
   const skip = (page - 1) * limit;
 
   // Build where clause
-  const where: any = {};
+  const where: Prisma.ProductWhereInput = {};
 
   // Search by name or description
   if (query.search) {
@@ -74,9 +75,7 @@ productRoute.openapi(getProductsRoute, async (c) => {
 
   // Filter by category slug (supports multiple comma-separated values)
   if (query.category) {
-    const slugs = query.category
-      .split(",")
-      .map((s: string) => s.trim());
+    const slugs = query.category.split(",").map((s: string) => s.trim());
     const categories = await prisma.category.findMany({
       where: { slug: slugs.length === 1 ? slugs[0] : { in: slugs } },
       select: { id: true },
