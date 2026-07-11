@@ -42,8 +42,8 @@ export async function verifyToken(
     const payload = jwt.verify(token, getJwtSecret(), {
       algorithms: ["HS256"],
     });
-    if ((payload as any).type !== "access") return null;
-    return { userId: (payload as any).id };
+    if ((payload as { type: string }).type !== "access") return null;
+    return { userId: (payload as { id: string }).id };
   } catch {
     return null;
   }
@@ -69,7 +69,7 @@ export async function verifyRefreshToken(
     const payload = jwt.verify(token, getJwtSecret(), {
       algorithms: ["HS256"],
     });
-    if ((payload as any).type !== "refresh") return null;
+    if ((payload as { type: string }).type !== "refresh") return null;
     return payload as { userId: string };
   } catch {
     return null;
